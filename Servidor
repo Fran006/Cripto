@@ -1,0 +1,183 @@
+from Crypto.Cipher import PKCS1_OAEP
+from Crypto.PublicKey import RSA
+import socket
+import sys
+import threading
+import sqlite3
+import hashlib
+import os
+from time import *
+import random
+
+
+
+#llaves
+
+key_pub = RSA.importKey(open('paralelepipedo.pub').read())
+key_pri = RSA.importKey(open('paralelepipedo.pem').read())
+print(key_pub)
+print(key_pri)
+
+PORT = 9000
+server=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.bind(('127.0.0.1',PORT))
+server.listen(1000)
+
+def basedatosPatata():
+        
+        conn = sqlite3.connect('BaseDeDatosPatata.db')
+        c = conn.cursor()
+        g1 = open('patata1descipher.txt', 'r')
+        g2 = open('patata2descipher.txt', 'r')
+        g3 = open('patata3descipher.txt', 'r')
+        g4 = open('patata4descipher.txt', 'r')
+        g5 = open('patata5descipher.txt', 'r')
+        
+        c.execute('''CREATE TABLE tabla
+                     (numero INTEGER PRIMARY KEY AUTOINCREMENT, archivo1, archivo2, archivo3, archivo4, archivo5)''')
+
+        for i in g1:
+            c.execute("INSERT INTO tabla(archivo1) VALUES (?) ;", (i,))
+
+        for i in g2:
+            c.execute("INSERT INTO tabla(archivo2) VALUES (?) ;", (i,))
+    
+        for i in g3:
+            c.execute("INSERT INTO tabla(archivo3) VALUES (?) ;", (i,))
+    
+        for i in g4:
+            c.execute("INSERT INTO tabla(archivo4) VALUES (?) ;", (i,))
+            
+        for i in g5:
+            c.execute("INSERT INTO tabla(archivo5) VALUES (?) ;", (i,))
+
+        conn.commit()
+        g1.close()
+        g2.close()
+        g3.close()
+        g4.close()
+        g5.close()
+
+        conn.close()
+        print("se creo la base de datos")
+
+
+
+def recibir (sock, addr):
+
+        print("empezamos")
+
+    #se envia clave publica
+        
+        sock.send(repr(key_pub).encode())
+
+
+#descifrar archivo 1
+    
+        sd=sock.recv(1024).decode()
+        print(sd)
+        cipher = PKCS1_OAEP.new(key_pri)
+        l1=open("patata1descipher.txt","w")
+        print("empezado a recibir archivo 1")
+        while True:
+                i = sock.recv(4096).decode()
+                if i == "fin":
+                        break
+                a=repr(i)
+                a = a.replace("'", "")
+                a = a.replace("\n", "")
+                b = bytes.fromhex(a)
+                message = cipher.decrypt(b)
+                l1.write(message.decode())
+                sock.send(b"esperanding")
+                #print("funciono")
+        sock.send(b"manda el 2")
+        print("El archivo1 se ha recibido correctamente.")
+        l1.close()
+    
+#descifrar 2
+        l2=open("patata2descipher.txt","w")
+        print("empezado a recibir archivo 2")
+        while True:
+                i = sock.recv(4096).decode()
+                if i == "fin":
+                        break
+                a=repr(i)
+                a = a.replace("'", "")
+                a = a.replace("\n", "")
+                b = bytes.fromhex(a)
+                message = cipher.decrypt(b)
+                l2.write(message.decode())
+                sock.send(b"esperanding")
+                #print("funciono")
+        sock.send(b"manda el 3")
+        print("El archivo2 se ha recibido correctamente.")
+        l2.close()
+
+#descifrar 3
+        l3=open("patata3descipher.txt","w")
+        print("empezado a recibir archivo 3")
+        while True:
+                i = sock.recv(4096).decode()
+                if i == "fin":
+                        break
+                a=repr(i)
+                a = a.replace("'", "")
+                a = a.replace("\n", "")
+                b = bytes.fromhex(a)
+                message = cipher.decrypt(b)
+                l3.write(message.decode())
+                sock.send(b"esperanding")
+                #print("funciono")
+        sock.send(b"manda el 4")
+        print("El archivo3 se ha recibido correctamente.")
+        l3.close()
+        
+#descifrar 4
+        l4=open("patata4descipher.txt","w")
+        print("empezado a recibir archivo 4")
+        while True:
+                i = sock.recv(4096).decode()
+                if i == "fin":
+                        break
+                a=repr(i)
+                a = a.replace("'", "")
+                a = a.replace("\n", "")
+                b = bytes.fromhex(a)
+                message = cipher.decrypt(b)
+                l4.write(message.decode())
+                sock.send(b"esperanding")
+                #print("funciono")
+        sock.send(b"manda el 5")
+        print("El archivo4 se ha recibido correctamente.")
+        l4.close()
+#descifrar 5
+        l5=open("patata5descipher.txt","w")
+        print("empezado a recibir archivo 5")
+        while True:
+                i = sock.recv(4096).decode()
+                if i == "fin":
+                        break
+                a=repr(i)
+                a = a.replace("'", "")
+                a = a.replace("\n", "")
+                b = bytes.fromhex(a)
+                message = cipher.decrypt(b)
+                l5.write(message.decode())
+                sock.send(b"esperanding")
+                #print("funciono")
+        sock.send(b" no mandi mas")
+        print("El archivo5 se ha recibido correctamente.")
+        l5.close()
+
+
+#Enviar a la base de datos
+    
+        basedatosPatata()
+        sock.close()
+    
+while True:
+	sock, addr = server.accept()
+	tarea = threading.Thread(target = recibir, args = (sock, addr))
+	tarea.start()
+
